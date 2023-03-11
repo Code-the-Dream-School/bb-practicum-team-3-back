@@ -1,6 +1,6 @@
-# Back-End Repo for Team 2 of Baboon/Bald Eagle Practicum
+# Back-End Repo for Team 3 of Baboon/Bald Eagle Practicum
 
-This will be the API for bb-practicum-team-2-front React app.
+This will be the API for bb-practicum-team-3-front React app.
 
 These instructions are for the **front-end team** so they can setup their local development environment to run 
 both the back-end server and their front-end app. You can go through these steps during your first group meeting 
