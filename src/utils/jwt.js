@@ -14,7 +14,7 @@ const attachCookiesToResponse = ({ res, user }) => {
 
   const oneDay = 1000 * 60 * 60 * 24;
 
-  res.cookie("token", token, {
+  res.cookie(`${process.env.COOKIE_NAME}`, token, {
     httpOnly: true,
     expires: new Date(Date.now() + oneDay),
     secure: process.env.NODE_ENV === "production",

@@ -12,10 +12,6 @@ const register = async (req, res) => {
     throw new CustomError.BadRequestError("Email already exists");
   }
 
-  /// first registered user is an admin
-  // const isFirstAccount = (await User.countDocuments({})) === 0;
-  // const role = isFirstAccount ? "admin" : "user";
-
   const user = await User.create({ name, email, password });
   const tokenUser = createTokenUser(user);
   attachCookiesToResponse({ res, user: tokenUser });
@@ -45,7 +41,7 @@ const login = async (req, res) => {
 
 ///LOGOUT
 const logout = async (req, res) => {
-  res.cookie("token", "logout", {
+  res.cookie(`${process.env.COOKIE_NAME}`, "logout", {
     httpOnly: true,
     expires: new Date(Date.now()),
   });
