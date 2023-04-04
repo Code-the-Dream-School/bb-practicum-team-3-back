@@ -4,7 +4,8 @@
   "description": "Back-End Repo for Team 3 of Baboon/Bald Eagle Practicum",
   "main": "app.js",
   "scripts": {
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "format": "prettier --write \"src/**/*.js\""
   },
   "author": "",
   "license": "ISC",
@@ -23,6 +24,7 @@
     "validator": "^13.9.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.21"
+    "nodemon": "^2.0.21",
+    "prettier": "^2.8.7"
   }
 }
