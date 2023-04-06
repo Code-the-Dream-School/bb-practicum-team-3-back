@@ -1,24 +1,24 @@
-const User = require("../models/User");
 const { StatusCodes } = require("http-status-codes");
+const User = require("../models/User");
 const CustomError = require("../errors");
 const { attachCookiesToResponse, createTokenUser } = require("../utils");
 
 /// REGISTER
 const register = async (req, res) => {
-  const { email, name, password } = req.body;
+  const { firstName, lastName, email, password } = req.body;
 
   const emailAlreadyExists = await User.findOne({ email });
   if (emailAlreadyExists) {
     throw new CustomError.BadRequestError("Email already exists");
   }
 
-  const user = await User.create({ name, email, password });
+  const user = await User.create({ firstName, lastName, email, password });
   const tokenUser = createTokenUser(user);
   attachCookiesToResponse({ res, user: tokenUser });
   res.status(StatusCodes.CREATED).json({ user: tokenUser });
 };
 
-///LOGIN
+/// LOGIN
 const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -39,7 +39,7 @@ const login = async (req, res) => {
   res.status(StatusCodes.OK).json({ user: tokenUser });
 };
 
-///LOGOUT
+/// LOGOUT
 const logout = async (req, res) => {
   res.cookie(`${process.env.COOKIE_NAME}`, "logout", {
     httpOnly: true,
