@@ -1,5 +1,5 @@
 const express = require("express");
-const { getHotelsByLocation } = require("../controllers/booking-api");
+const { getHotelsByLocation } = require("../controllers/booking");
 
 const router = express.Router();
 

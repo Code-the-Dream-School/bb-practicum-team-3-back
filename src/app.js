@@ -29,7 +29,7 @@ app.get("/", (req, res) => {
 
 // routes
 const authRouter = require("./routes/auth");
-const bookingRouter = require("./routes/booking-api");
+const bookingRouter = require("./routes/booking");
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/booking", bookingRouter);
