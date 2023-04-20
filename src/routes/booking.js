@@ -8,4 +8,5 @@ const router = express.Router();
 
 router.get("/hotelsbylocation", getHotelsByLocation);
 router.get("/hotelDescription", getHotelDescription);
+
 module.exports = router;

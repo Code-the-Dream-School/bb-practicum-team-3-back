@@ -51,16 +51,16 @@ const getHotelsByLocation = async (req, res) => {
 };
 
 const getHotelDescription = async (req, res) => {
-  let { hotel } = req.query;
+  let { hotelId } = req.query;
 
-  if (!hotel) {
+  if (!hotelId) {
     throw new Error("Hotel Id is required");
   }
 
   try {
-    const hotelId = await getHotelDescription(hotel);
+    const description = await hotelDescription(hotelId);
 
-    res.status(StatusCodes.OK).json({ data: hotelDescription });
+    res.status(StatusCodes.OK).json({ data: description });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }

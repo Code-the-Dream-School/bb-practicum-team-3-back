@@ -81,23 +81,25 @@ const searchHotels = async (
   }
 };
 
-const hotelDescription = async (hotel) => {
+const hotelDescription = async (hotelId) => {
   const options = {
     method: "GET",
     url: "https://booking-com.p.rapidapi.com/v1/hotels/description",
-    params: { hotel_id: `${hotel}`, locale: "en-gb" },
+    params: { hotel_id: `${hotelId}`, locale: "en-gb" },
     headers: {
       "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
       "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
     },
   };
 
-  try {
-    const response = await axios.request(options);
-    return response.data[0].hotel_id;
-  } catch (error) {
-    throw new Error("Unable to fetch hotel");
-  }
+  axios
+    .request(options)
+    .then(function (response) {
+      console.log(response.data);
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
 };
 
 module.exports = { searchLocation, searchHotels, hotelDescription };
