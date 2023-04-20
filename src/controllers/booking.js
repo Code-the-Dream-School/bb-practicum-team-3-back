@@ -4,6 +4,7 @@ const {
   searchHotels,
   hotelDescription,
   hotelReviews,
+  hotelData,
 } = require("../api/bookingCalls");
 
 const getHotelsByLocation = async (req, res) => {
@@ -82,4 +83,25 @@ const getHotelReviews = async (req, res) => {
   }
 };
 
-module.exports = { getHotelsByLocation, getHotelDescription, getHotelReviews };
+const getHotelData = async (req, res) => {
+  let { hotelId } = req.query;
+
+  if (!hotelId) {
+    throw new Error("Hotel Id is required");
+  }
+
+  try {
+    const allHoteldata = await hotelData(hotelId);
+
+    res.status(StatusCodes.OK).json({ data: allHoteldata });
+  } catch (error) {
+    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
+
+module.exports = {
+  getHotelsByLocation,
+  getHotelDescription,
+  getHotelReviews,
+  getHotelData,
+};

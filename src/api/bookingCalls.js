@@ -91,15 +91,12 @@ const hotelDescription = async (hotelId) => {
       "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
     },
   };
-
-  axios
-    .request(options)
-    .then(function (response) {
-      console.log(response.data);
-    })
-    .catch(function (error) {
-      console.error(error);
-    });
+  try {
+    const response = await axios.request(options);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const hotelReviews = async (hotelId) => {
@@ -118,14 +115,30 @@ const hotelReviews = async (hotelId) => {
     },
   };
 
-  axios
-    .request(options)
-    .then(function (response) {
-      console.log(response.data);
-    })
-    .catch(function (error) {
-      console.error(error);
-    });
+  try {
+    const response = await axios.request(options);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const hotelData = async (hotelId) => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/hotels/data",
+    params: { hotel_id: "1377073", locale: "en-gb" },
+    headers: {
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+  try {
+    const response = await axios.request(options);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 module.exports = {
@@ -133,4 +146,5 @@ module.exports = {
   searchHotels,
   hotelDescription,
   hotelReviews,
+  hotelData,
 };
