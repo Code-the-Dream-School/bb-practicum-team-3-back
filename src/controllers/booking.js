@@ -1,5 +1,9 @@
 const { StatusCodes } = require("http-status-codes");
-const { searchLocation, searchHotels } = require("../api/bookingCalls");
+const {
+  searchLocation,
+  searchHotels,
+  hotelDescription,
+} = require("../api/bookingCalls");
 
 const getHotelsByLocation = async (req, res) => {
   let { destination, guestNumber, roomNumber, checkinDate, checkoutDate } =
@@ -46,4 +50,19 @@ const getHotelsByLocation = async (req, res) => {
   }
 };
 
-module.exports = { getHotelsByLocation };
+const getHotelDescription = async (req, res) => {
+  let { hotel } = req.query;
+
+  if (!hotel) {
+    throw new Error("Hotel Id is required");
+  }
+
+  try {
+    const hotelId = await getHotelDescription(hotel);
+
+    res.status(StatusCodes.OK).json({ data: hotelDescription });
+  } catch (error) {
+    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
+module.exports = { getHotelsByLocation, getHotelDescription };
