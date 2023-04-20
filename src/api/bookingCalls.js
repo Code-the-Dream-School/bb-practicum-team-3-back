@@ -102,4 +102,35 @@ const hotelDescription = async (hotelId) => {
     });
 };
 
-module.exports = { searchLocation, searchHotels, hotelDescription };
+const hotelReviews = async (hotelId) => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/hotels/reviews",
+    params: {
+      sort_type: "SORT_MOST_RELEVANT",
+      hotel_id: `${hotelId}`,
+      locale: "en-gb",
+      language_filter: "en-gb,de,fr",
+    },
+    headers: {
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+
+  axios
+    .request(options)
+    .then(function (response) {
+      console.log(response.data);
+    })
+    .catch(function (error) {
+      console.error(error);
+    });
+};
+
+module.exports = {
+  searchLocation,
+  searchHotels,
+  hotelDescription,
+  hotelReviews,
+};
