@@ -127,7 +127,7 @@ const hotelData = async (hotelId) => {
   const options = {
     method: "GET",
     url: "https://booking-com.p.rapidapi.com/v1/hotels/data",
-    params: { hotel_id: "1377073", locale: "en-gb" },
+    params: { hotel_id: `${hotelId}`, locale: "en-gb" },
     headers: {
       "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
       "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
