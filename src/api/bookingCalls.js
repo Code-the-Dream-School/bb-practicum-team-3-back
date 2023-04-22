@@ -135,7 +135,34 @@ const hotelData = async (hotelId) => {
   };
   try {
     const response = await axios.request(options);
-    return response.data;
+    ////// if the hotel does not have description_translations then the hotel will not be available.
+    if (!response.data.hasOwnProperty("description_translations")) {
+      return "The hotel is not available.";
+    }
+
+    const filteredHotelData = {};
+
+    for (const key in response.data) {
+      if (
+        key === "review_score" ||
+        key === "hotel_facilities" ||
+        key === "address" ||
+        key === "zip" ||
+        key === "name" ||
+        key === "description" ||
+        key === "description_translations" ||
+        key === "review_score_word" ||
+        key === "main_photo_id" ||
+        key === "hotel_facilities_filtered" ||
+        key === "city" ||
+        key === "hotel_id" ||
+        key === "country"
+      ) {
+        filteredHotelData[key] = response.data[key];
+      }
+    }
+
+    return filteredHotelData;
   } catch (error) {
     console.log(error);
   }

@@ -93,12 +93,13 @@ const getHotelData = async (req, res) => {
   try {
     const allHoteldata = await hotelData(hotelId);
 
-    res.status(StatusCodes.OK).json({ data: allHoteldata });
+    res.status(StatusCodes.OK).json({ FilteredHotelData: allHoteldata });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
 };
 
+///// exports /////
 module.exports = {
   getHotelsByLocation,
   getHotelDescription,
