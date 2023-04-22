@@ -135,6 +135,7 @@ const hotelData = async (hotelId) => {
   };
   try {
     const response = await axios.request(options);
+
     ////// if the hotel does not have description_translations then the hotel will not be available.
     if (!response.data.hasOwnProperty("description_translations")) {
       return "The hotel is not available.";
@@ -168,10 +169,36 @@ const hotelData = async (hotelId) => {
   }
 };
 
+const hotelPictures = async (hotelId) => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/hotels/photos",
+    params: { hotel_id: `${hotelId}`, locale: "en-gb" },
+    headers: {
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+  try {
+    const response = await axios.request(options);
+
+    /// filtering the large object to only include the max_url and photo_id
+    const filteredPhotos = response.data.map((photo) => {
+      const { photo_id, url_max } = photo;
+      return { photo_id, url_max };
+    });
+
+    return filteredPhotos;
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   searchLocation,
   searchHotels,
   hotelDescription,
   hotelReviews,
   hotelData,
+  hotelPictures,
 };
