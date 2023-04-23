@@ -2,11 +2,11 @@ const { StatusCodes } = require("http-status-codes");
 const {
   searchLocation,
   searchHotels,
-  hotelDescription,
   hotelReviews,
   hotelData,
   hotelPictures,
   hotelMapPreview,
+  hotelRooms,
 } = require("../api/bookingCalls");
 
 const getHotelsByLocation = async (req, res) => {
@@ -49,22 +49,6 @@ const getHotelsByLocation = async (req, res) => {
     );
 
     res.status(StatusCodes.OK).json({ data: hotels });
-  } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
-  }
-};
-
-const getHotelDescription = async (req, res) => {
-  let { hotelId } = req.query;
-
-  if (!hotelId) {
-    throw new Error("Hotel Id is required");
-  }
-
-  try {
-    const description = await hotelDescription(hotelId);
-
-    res.status(StatusCodes.OK).json({ data: description });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
@@ -132,13 +116,67 @@ const getHotelMap = async (req, res) => {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
 };
+///// this creates error messages if there are missing params
+const getErrorMessages = ({
+  hotelId,
+  checkinDate,
+  checkoutDate,
+  adultNumber,
+}) => {
+  const errorMessages = [];
+
+  if (!hotelId) {
+    errorMessages.push("Hotel Id is required");
+  }
+
+  if (!checkinDate) {
+    errorMessages.push("Checkin date is required");
+  }
+
+  if (!checkoutDate) {
+    errorMessages.push("Checkout date is required");
+  }
+
+  if (!adultNumber) {
+    errorMessages.push("Number of adults is required");
+  }
+
+  return errorMessages.join(", ");
+};
+
+const getHotelRooms = async (req, res) => {
+  let { hotelId, checkinDate, checkoutDate, adultNumber } = req.query;
+
+  const errorMessages = getErrorMessages({
+    hotelId,
+    checkinDate,
+    checkoutDate,
+    adultNumber,
+  });
+  if (errorMessages) {
+    throw new Error(errorMessages);
+  }
+
+  try {
+    const rooms = await hotelRooms(
+      hotelId,
+      checkinDate,
+      checkoutDate,
+      adultNumber
+    );
+
+    res.status(StatusCodes.OK).json({ data: rooms });
+  } catch (error) {
+    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
 
 ///// exports /////
 module.exports = {
   getHotelsByLocation,
-  getHotelDescription,
   getHotelReviews,
   getHotelData,
   getHotelPictures,
   getHotelMap,
+  getHotelRooms,
 };
