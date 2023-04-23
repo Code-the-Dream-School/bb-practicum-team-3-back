@@ -194,6 +194,27 @@ const hotelPictures = async (hotelId) => {
   }
 };
 
+const hotelMapPreview = async (hotelId) => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/hotels/map-markers",
+    params: { hotel_id: `${hotelId}`, locale: "en-gb" },
+    headers: {
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+    const { map_preview_url } = response.data;
+    /// only returns the map_preview_url
+    return { map_preview_url };
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   searchLocation,
   searchHotels,
@@ -201,4 +222,5 @@ module.exports = {
   hotelReviews,
   hotelData,
   hotelPictures,
+  hotelMapPreview,
 };
