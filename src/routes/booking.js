@@ -11,11 +11,12 @@ const {
 
 const router = express.Router();
 
-router.get("/hotelsbylocation", getHotelsByLocation);
-router.get("/hotelreviews", getHotelReviews);
-router.get("/hoteldata", getHotelData);
-router.get("/hotelpictures", getHotelPictures);
-router.get("/hotelmap", getHotelMap);
-router.get("/hotelrooms", getHotelRooms);
+router
+  .get("/hotelsbylocation", getHotelsByLocation)
+  .get("/hotelreviews", getHotelReviews)
+  .get("/hoteldata", getHotelData)
+  .get("/hotelpictures", getHotelPictures)
+  .get("/hotelmap", getHotelMap)
+  .get("/hotelrooms", getHotelRooms);
 
 module.exports = router;
