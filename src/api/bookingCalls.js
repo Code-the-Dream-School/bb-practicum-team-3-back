@@ -223,9 +223,15 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
     const response = await axios.request(options);
     const { data } = response; // extract the 'data' object from the response
 
-    const { rooms, room_recommendation } = data[0]; // extract the required fields from the first object of the 'data' array
+    const { block, rooms, room_recommendation } = data[0]; // extract the required fields from the first object of the 'data' array
 
-    return { rooms, room_recommendation };
+    const filteredBlock = block.map(({ min_price, room_name, block_id }) => ({
+      min_price: { currency: min_price.currency, price: min_price.price }, /// excludes the large "extra_charges_breakdown" object
+      room_name,
+      block_id,
+    })); // create a new array with only the required fields for each object in the 'block' array
+
+    return { block: filteredBlock, rooms, room_recommendation };
   } catch (error) {
     console.error(error);
   }
