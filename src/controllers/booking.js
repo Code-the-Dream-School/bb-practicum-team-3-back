@@ -266,6 +266,12 @@ const allHotelDetails = async (req, res) => {
       allHotelData.hotel_facilities_filtered
     );
 
+    // Remove language code from hotel_description_translations
+    allHotelData.description_translations =
+      allHotelData.description_translations.map(
+        ({ languagecode, ...rest }) => rest
+      );
+
     // Combine all the responses
     const result = {
       HotelData: allHotelData,
