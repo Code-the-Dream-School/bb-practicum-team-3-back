@@ -7,6 +7,8 @@ const {
   hotelPictures,
   hotelMapPreview,
   hotelRooms,
+  hotel_facilities_list,
+  countryCodes,
 } = require("../api/bookingCalls");
 
 const getHotelsByLocation = async (req, res) => {
@@ -54,21 +56,64 @@ const getHotelsByLocation = async (req, res) => {
   }
 };
 
+const getCountryCodes = async (req, res) => {
+  try {
+    const allCountryCodes = await countryCodes();
+
+    res.status(StatusCodes.OK).json({ countries: allCountryCodes });
+  } catch (error) {
+    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
+
 const getHotelReviews = async (req, res) => {
   let { hotelId } = req.query;
 
   if (!hotelId) {
     throw new Error("Hotel Id is required");
   }
-  try {
-    const reviews = await hotelReviews(hotelId);
 
-    res.status(StatusCodes.OK).json({ data: reviews });
+  try {
+    const [reviews, countries] = await Promise.all([
+      hotelReviews(hotelId),
+      countryCodes(),
+    ]);
+
+    const countryCodeToName = countries.result.reduce((acc, country) => {
+      acc[country.country] = country.name;
+      return acc;
+    }, {});
+
+    reviews.result.forEach((review) => {
+      review.author.countrycode = countryCodeToName[review.author.countrycode];
+      review.countrycode = countryCodeToName[review.countrycode];
+      review.date = review.date.split(" ")[0];
+      review.average_score = Math.round(review.average_score);
+
+      // Remove is_moderated and is_incentivised
+      delete review.is_moderated;
+      delete review.is_incentivised;
+
+      // Only keep url_original in stayed_room_info.photo
+      const urlOriginal = review.stayed_room_info.photo.url_original;
+      review.stayed_room_info.photo = { url_original: urlOriginal };
+    });
+
+    res.status(StatusCodes.OK).json({ Reviews: reviews });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
 };
 
+const getHotelFacilities = async (req, res) => {
+  try {
+    const allHoteFacilities = await hotel_facilities_list();
+
+    res.status(StatusCodes.OK).json({ facilities: allHoteFacilities });
+  } catch (error) {
+    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
 const getHotelData = async (req, res) => {
   let { hotelId } = req.query;
 
@@ -78,12 +123,41 @@ const getHotelData = async (req, res) => {
 
   try {
     const allHoteldata = await hotelData(hotelId);
+    const facilitiesResponse = await hotel_facilities_list();
+
+    // Access the facilities array using facilitiesResponse.result
+    const facilities = facilitiesResponse.result;
+
+    // Create a map of facility IDs to facility names
+    const facilityIdToName = facilities.reduce((acc, facility) => {
+      acc[facility.hotel_facility_type_id] = facility.name;
+      return acc;
+    }, {});
+
+    // Replace the facility IDs with facility names
+    const replaceIdsWithNames = (ids) => {
+      return ids
+        .split(",")
+        .map((id) => facilityIdToName[id])
+        .join(",");
+    };
+
+    allHoteldata.hotel_facilities = replaceIdsWithNames(
+      allHoteldata.hotel_facilities
+    );
+    allHoteldata.hotel_facilities_filtered = replaceIdsWithNames(
+      allHoteldata.hotel_facilities_filtered
+    );
 
     res.status(StatusCodes.OK).json({ FilteredHotelData: allHoteldata });
   } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+    res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
   }
 };
+/// real revierw
+/// country code
+/// remove time on date of review
+/// all details are on one call.
 
 const getHotelPictures = async (req, res) => {
   let { hotelId } = req.query;
@@ -179,4 +253,6 @@ module.exports = {
   getHotelPictures,
   getHotelMap,
   getHotelRooms,
+  getHotelFacilities,
+  getCountryCodes,
 };

@@ -80,6 +80,25 @@ const searchHotels = async (
     throw new Error("Unable to fetch hotels");
   }
 };
+//// list of all of the country codes
+const countryCodes = async () => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/static/country",
+    headers: {
+      "content-type": "application/octet-stream",
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+    return response.data;
+  } catch (error) {
+    console.error("Error:", error.message);
+  }
+};
 
 const hotelReviews = async (hotelId) => {
   const options = {
@@ -102,6 +121,25 @@ const hotelReviews = async (hotelId) => {
     return response.data;
   } catch (error) {
     console.log(error);
+  }
+};
+/// list of all of the hotel facilities with hotel facility type ID and the actual name.
+const hotel_facilities_list = async () => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/static/hotel-facility-types",
+    headers: {
+      "content-type": "application/octet-stream",
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+    return response.data;
+  } catch (error) {
+    console.error("Error:", error.message);
   }
 };
 
@@ -147,7 +185,7 @@ const hotelData = async (hotelId) => {
 
     return filteredHotelData;
   } catch (error) {
-    console.log(error);
+    console.error("Error:", error.message);
   }
 };
 
@@ -228,10 +266,19 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
     const filteredBlock = block.map(({ min_price, room_name, block_id }) => ({
       min_price: { currency: min_price.currency, price: min_price.price }, /// excludes the large "extra_charges_breakdown" object
       room_name,
-      block_id,
+      id: block_id,
     })); // create a new array with only the required fields for each object in the 'block' array
 
-    return { block: filteredBlock, rooms, room_recommendation };
+    const roomKeys = Object.keys(rooms);
+    const filteredRooms = {};
+    for (const key of roomKeys) {
+      const { photos, ...roomData } = rooms[key];
+      filteredRooms[key] = {
+        ...roomData,
+        photos: photos.map(({ url_original }) => ({ url_original })),
+      };
+    }
+    return { block: filteredBlock, rooms: filteredRooms, room_recommendation };
   } catch (error) {
     console.error(error);
   }
@@ -245,4 +292,6 @@ module.exports = {
   hotelPictures,
   hotelMapPreview,
   hotelRooms,
+  hotel_facilities_list,
+  countryCodes,
 };
