@@ -99,7 +99,7 @@ const countryCodes = async () => {
     console.error("Error:", error.message);
   }
 };
-
+//// top 25 most relevant reviews
 const hotelReviews = async (hotelId) => {
   const options = {
     method: "GET",
@@ -142,7 +142,7 @@ const hotel_facilities_list = async () => {
     console.error("Error:", error.message);
   }
 };
-
+//// basic hotel info
 const hotelData = async (hotelId) => {
   const options = {
     method: "GET",
@@ -234,7 +234,7 @@ const hotelMapPreview = async (hotelId) => {
     console.log(error);
   }
 };
-
+///// available rooms based on req.params
 const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
   const axios = require("axios");
 
