@@ -151,6 +151,7 @@ const allHotelDetails = async (req, res) => {
 
   const processReviews = (reviews) => {
     const { count, result } = reviews;
+    if (!result) return { count: 0, result: [] };
     ///// filtering out keys we don't need
     const processedResult = result.map((review) => {
       const {
@@ -213,6 +214,7 @@ const allHotelDetails = async (req, res) => {
     };
   };
   ///// limited responses
+
   try {
     const [
       reviewsResponse,
@@ -230,12 +232,20 @@ const allHotelDetails = async (req, res) => {
       hotel_facilities_listLimited(),
     ]);
 
-    // Process reviews response
-    const reviews = processReviews(reviewsResponse);
     const countryCodeToName = countries.result.reduce((acc, country) => {
       acc[country.country] = country.name;
       return acc;
     }, {});
+    // error handling if the hotel does not contain needed data.
+    if (!allHotelData || allHotelData === "The hotel is not available.") {
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ error: "The hotel is not available." });
+      return;
+    }
+
+    // Process reviews response
+    const reviews = processReviews(reviewsResponse);
 
     reviews.result.forEach((review) => {
       review.author.countrycode = countryCodeToName[review.author.countrycode];
@@ -253,6 +263,7 @@ const allHotelDetails = async (req, res) => {
     }, {});
 
     const replaceIdsWithNames = (ids) => {
+      if (!ids) return ""; // Added this line to handle undefined ids
       return ids
         .split(",")
         .map((id) => facilityIdToName[id])
@@ -279,10 +290,11 @@ const allHotelDetails = async (req, res) => {
       Photos: allHotelPictures,
       Reviews: reviews,
     };
-
     res.status(StatusCodes.OK).json(result);
   } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
   }
 };
 

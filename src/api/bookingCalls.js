@@ -158,7 +158,7 @@ const hotelData = async (hotelId) => {
 
     ////// if the hotel does not have description_translations then the hotel will not be available.
     if (!response.data.hasOwnProperty("description_translations")) {
-      return "The hotel is not available.";
+      throw new Error("The hotel is not available.");
     }
 
     const filteredHotelData = {};
