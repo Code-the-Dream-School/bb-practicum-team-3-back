@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const limiter = require("../utils/apiLimiter");
 const {
   searchLocation,
   searchHotels,
@@ -154,10 +155,6 @@ const getHotelData = async (req, res) => {
     res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
   }
 };
-/// real revierw
-/// country code
-/// remove time on date of review
-/// all details are on one call.
 
 const getHotelPictures = async (req, res) => {
   let { hotelId } = req.query;
@@ -239,7 +236,115 @@ const getHotelRooms = async (req, res) => {
       adultNumber
     );
 
-    res.status(StatusCodes.OK).json({ data: rooms });
+    res.status(StatusCodes.OK).json({ Rooms: rooms });
+  } catch (error) {
+    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
+
+/////// All of the functions using rate limiter
+const hotelReviewsLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelReviews(hotelId));
+};
+
+const hotelDataLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelData(hotelId));
+};
+
+const hotelPicturesLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelPictures(hotelId));
+};
+
+const hotelMapPreviewLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelMapPreview(hotelId));
+};
+
+const countryCodesLimited = async () => {
+  return limiter.schedule(() => countryCodes());
+};
+
+const hotel_facilities_listLimited = async () => {
+  return limiter.schedule(() => hotel_facilities_list());
+};
+////////////////////
+
+///// One single function to get all of the details, able to be used because of the rate limiter.
+const allHotelDetails = async (req, res) => {
+  let { hotelId } = req.query;
+
+  if (!hotelId) {
+    throw new Error("Hotel Id is required");
+  }
+
+  try {
+    const [
+      reviews,
+      allHotelData,
+      allHotelPictures,
+      mapPreviewUrl,
+      countries,
+      facilitiesResponse,
+    ] = await Promise.all([
+      hotelReviewsLimited(hotelId),
+      hotelDataLimited(hotelId),
+      hotelPicturesLimited(hotelId),
+      hotelMapPreviewLimited(hotelId),
+      countryCodesLimited(),
+      hotel_facilities_listLimited(),
+    ]);
+
+    // Process reviews response
+    const countryCodeToName = countries.result.reduce((acc, country) => {
+      acc[country.country] = country.name;
+      return acc;
+    }, {});
+
+    reviews.result.forEach((review) => {
+      review.author.countrycode = countryCodeToName[review.author.countrycode];
+      review.countrycode = countryCodeToName[review.countrycode];
+      review.date = review.date.split(" ")[0];
+      review.average_score = Math.round(review.average_score);
+
+      // Remove is_moderated and is_incentivised
+      delete review.is_moderated;
+      delete review.is_incentivised;
+
+      // Only keep url_original in stayed_room_info.photo
+      const urlOriginal = review.stayed_room_info.photo.url_original;
+      review.stayed_room_info.photo = { url_original: urlOriginal };
+    });
+
+    // Process hotel data response
+    const facilities = facilitiesResponse.result;
+
+    const facilityIdToName = facilities.reduce((acc, facility) => {
+      acc[facility.hotel_facility_type_id] = facility.name;
+      return acc;
+    }, {});
+
+    const replaceIdsWithNames = (ids) => {
+      return ids
+        .split(",")
+        .map((id) => facilityIdToName[id])
+        .join(",");
+    };
+
+    allHotelData.hotel_facilities = replaceIdsWithNames(
+      allHotelData.hotel_facilities
+    );
+    allHotelData.hotel_facilities_filtered = replaceIdsWithNames(
+      allHotelData.hotel_facilities_filtered
+    );
+
+    // Combine all the responses
+    const result = {
+      HotelData: allHotelData,
+      MapPreview: mapPreviewUrl,
+      Photos: allHotelPictures,
+      Reviews: reviews,
+    };
+
+    res.status(StatusCodes.OK).json(result);
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
@@ -255,4 +360,5 @@ module.exports = {
   getHotelRooms,
   getHotelFacilities,
   getCountryCodes,
+  allHotelDetails,
 };
