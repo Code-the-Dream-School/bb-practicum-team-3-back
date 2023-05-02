@@ -331,8 +331,8 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
       };
     }
     return {
-      Available_Rooms: filteredBlock,
-      Rooms_Info_Sorted_By_Id: filteredRooms,
+      available_rooms: filteredBlock,
+      rooms_info_sorted_by_id: filteredRooms,
       room_recommendation: filteredRoomRecommendation,
     };
   } catch (error) {
