@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const limiter = require("../utils/apiLimiter");
 const {
   searchLocation,
   searchHotels,
@@ -7,6 +8,8 @@ const {
   hotelPictures,
   hotelMapPreview,
   hotelRooms,
+  hotel_facilities_list,
+  countryCodes,
 } = require("../api/bookingCalls");
 
 const getHotelsByLocation = async (req, res) => {
@@ -54,69 +57,7 @@ const getHotelsByLocation = async (req, res) => {
   }
 };
 
-const getHotelReviews = async (req, res) => {
-  let { hotelId } = req.query;
-
-  if (!hotelId) {
-    throw new Error("Hotel Id is required");
-  }
-  try {
-    const reviews = await hotelReviews(hotelId);
-
-    res.status(StatusCodes.OK).json({ data: reviews });
-  } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
-  }
-};
-
-const getHotelData = async (req, res) => {
-  let { hotelId } = req.query;
-
-  if (!hotelId) {
-    throw new Error("Hotel Id is required");
-  }
-
-  try {
-    const allHoteldata = await hotelData(hotelId);
-
-    res.status(StatusCodes.OK).json({ FilteredHotelData: allHoteldata });
-  } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
-  }
-};
-
-const getHotelPictures = async (req, res) => {
-  let { hotelId } = req.query;
-
-  if (!hotelId) {
-    throw new Error("Hotel Id is required");
-  }
-
-  try {
-    const allHotePictures = await hotelPictures(hotelId);
-
-    res.status(StatusCodes.OK).json({ filteredPhotos: allHotePictures });
-  } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
-  }
-};
-
-const getHotelMap = async (req, res) => {
-  let { hotelId } = req.query;
-
-  if (!hotelId) {
-    throw new Error("Hotel Id is required");
-  }
-
-  try {
-    const mapPreviewUrl = await hotelMapPreview(hotelId);
-
-    res.status(StatusCodes.OK).json({ mapPreview: mapPreviewUrl });
-  } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
-  }
-};
-///// this creates error messages if there are missing params
+///// this creates error messages if there are missing params for get hotel rooms
 const getErrorMessages = ({
   hotelId,
   checkinDate,
@@ -165,18 +106,199 @@ const getHotelRooms = async (req, res) => {
       adultNumber
     );
 
-    res.status(StatusCodes.OK).json({ data: rooms });
+    res.status(StatusCodes.OK).json({ rooms: rooms });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
+  }
+};
+
+// Rate-limited wrapper functions for API requests
+// These functions use the Bottleneck rate limiter to ensure that API requests are made within the allowed limits
+const hotelReviewsLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelReviews(hotelId));
+};
+
+const hotelDataLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelData(hotelId));
+};
+
+const hotelPicturesLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelPictures(hotelId));
+};
+
+const hotelMapPreviewLimited = async (hotelId) => {
+  return limiter.schedule(() => hotelMapPreview(hotelId));
+};
+
+const countryCodesLimited = async () => {
+  return limiter.schedule(() => countryCodes());
+};
+
+const hotel_facilities_listLimited = async () => {
+  return limiter.schedule(() => hotel_facilities_list());
+};
+///////////////////////////////////////////////////
+
+// Unified function to retrieve all hotel details
+// This function consolidates multiple API requests to collect a comprehensive set of information about a hotel.
+// The rate-limited wrapper functions are used to ensure compliance with API request limits.
+const allHotelDetails = async (req, res) => {
+  let { hotelId } = req.query;
+
+  if (!hotelId) {
+    throw new Error("Hotel Id is required");
+  }
+
+  const processReviews = (reviews) => {
+    const { count, result } = reviews;
+    if (!result) return { count: 0, result: [] };
+    ///// filtering out keys we don't need
+    const processedResult = result.map((review) => {
+      const {
+        stayed_room_info,
+        author,
+        city,
+        age_group,
+        anonymous,
+        is_trivial,
+        tags,
+        user_new_badges,
+        review_hash,
+        reviewng,
+        pros_translated,
+        cons_translated,
+        is_incentivised,
+        title_translated,
+        languagecode,
+        is_moderated,
+        helpful_vote_count,
+        hotelier_response_date,
+        ...rest
+      } = review;
+
+      const { checkout, checkin, ...stayedRoomInfoRest } = stayed_room_info;
+
+      const {
+        nr_reviews,
+        city: authorCity,
+        age_group: author_age_group,
+        helpful_vote_count: author_helpful_vote_count,
+        ...authorRest
+      } = author;
+
+      return {
+        ...rest,
+        stayed_room_info: {
+          ...stayedRoomInfoRest,
+          photo: { url_original: stayed_room_info.photo.url_original },
+          room_name: stayed_room_info.room_name,
+          room_id: stayed_room_info.room_id,
+          num_nights: stayed_room_info.num_nights,
+        },
+        author: {
+          ...authorRest,
+          user_id: author.user_id,
+          type: author.type,
+          name: author.name,
+          countrycode: author.countrycode,
+          helpful_vote_count: author.helpful_vote_count,
+          avatar: author.avatar,
+          type_string: author.type_string,
+        },
+      };
+    });
+
+    return {
+      count,
+      result: processedResult,
+    };
+  };
+  ///// limited responses
+
+  try {
+    const [
+      reviewsResponse,
+      allHotelData,
+      allHotelPictures,
+      mapPreviewUrl,
+      countries,
+      facilitiesResponse,
+    ] = await Promise.all([
+      hotelReviewsLimited(hotelId),
+      hotelDataLimited(hotelId),
+      hotelPicturesLimited(hotelId),
+      hotelMapPreviewLimited(hotelId),
+      countryCodesLimited(),
+      hotel_facilities_listLimited(),
+    ]);
+
+    const countryCodeToName = countries.result.reduce((acc, country) => {
+      acc[country.country] = country.name;
+      return acc;
+    }, {});
+    // error handling if the hotel does not contain needed data.
+    if (!allHotelData || allHotelData === "The hotel is not available.") {
+      res
+        .status(StatusCodes.NOT_FOUND)
+        .json({ error: "The hotel is not available." });
+      return;
+    }
+
+    // Process reviews response
+    const reviews = processReviews(reviewsResponse);
+
+    reviews.result.forEach((review) => {
+      review.author.countrycode = countryCodeToName[review.author.countrycode];
+      review.countrycode = countryCodeToName[review.countrycode];
+      review.date = review.date.split(" ")[0];
+      review.average_score = Math.round(review.average_score);
+    });
+
+    // Process hotel data response
+    const facilities = facilitiesResponse.result;
+
+    const facilityIdToName = facilities.reduce((acc, facility) => {
+      acc[facility.hotel_facility_type_id] = facility.name;
+      return acc;
+    }, {});
+
+    const replaceIdsWithNames = (ids) => {
+      if (!ids) return [];
+      return ids
+        .split(",")
+        .map((id) => facilityIdToName[id])
+        .filter((facility) => facility); // Filter out empty values
+    };
+
+    allHotelData.hotel_facilities = replaceIdsWithNames(
+      allHotelData.hotel_facilities
+    );
+    delete allHotelData.hotel_facilities_filtered; // Remove hotel_facilities_filtered
+
+    // Remove language code from hotel_description_translations
+    allHotelData.description_translations =
+      allHotelData.description_translations.map(
+        ({ languagecode, ...rest }) => rest
+      );
+
+    // Combine all the responses
+    const result = {
+      hotel_data: allHotelData,
+      map_preview: mapPreviewUrl,
+      photos: allHotelPictures,
+      reviews: reviews,
+    };
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ error: error.message });
   }
 };
 
 ///// exports /////
 module.exports = {
   getHotelsByLocation,
-  getHotelReviews,
-  getHotelData,
-  getHotelPictures,
-  getHotelMap,
   getHotelRooms,
+  allHotelDetails,
 };
