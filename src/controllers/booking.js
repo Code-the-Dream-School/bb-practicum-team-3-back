@@ -263,19 +263,17 @@ const allHotelDetails = async (req, res) => {
     }, {});
 
     const replaceIdsWithNames = (ids) => {
-      if (!ids) return ""; // Added this line to handle undefined ids
+      if (!ids) return [];
       return ids
         .split(",")
         .map((id) => facilityIdToName[id])
-        .join(",");
+        .filter((facility) => facility); // Filter out empty values
     };
 
     allHotelData.hotel_facilities = replaceIdsWithNames(
       allHotelData.hotel_facilities
     );
-    allHotelData.hotel_facilities_filtered = replaceIdsWithNames(
-      allHotelData.hotel_facilities_filtered
-    );
+    delete allHotelData.hotel_facilities_filtered; // Remove hotel_facilities_filtered
 
     // Remove language code from hotel_description_translations
     allHotelData.description_translations =
@@ -285,10 +283,10 @@ const allHotelDetails = async (req, res) => {
 
     // Combine all the responses
     const result = {
-      HotelData: allHotelData,
-      MapPreview: mapPreviewUrl,
-      Photos: allHotelPictures,
-      Reviews: reviews,
+      hotel_data: allHotelData,
+      map_preview: mapPreviewUrl,
+      photos: allHotelPictures,
+      reviews: reviews,
     };
     res.status(StatusCodes.OK).json(result);
   } catch (error) {
