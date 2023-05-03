@@ -10,6 +10,7 @@ const favicon = require("express-favicon");
 const logger = require("morgan");
 const connectDB = require("./db/connect");
 const corsOptions = require("./configs/corsConfig");
+const authenticateUser = require("./middleware/authentication");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 
 ///express json
@@ -31,9 +32,11 @@ app.get("/", (req, res) => {
 // routes
 const authRouter = require("./routes/auth");
 const bookingRouter = require("./routes/booking");
+const reservationRouter = require("./routes/reservation");
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/booking", bookingRouter);
+app.use("/api/v1/reservations", authenticateUser, reservationRouter);
 
 app.use(errorHandlerMiddleware);
 
