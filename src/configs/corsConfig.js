@@ -1,6 +1,6 @@
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://stayfinder-api.onrender.com",
+  "https://stayfinder.onrender.com/",
 ];
 
 const options = {
