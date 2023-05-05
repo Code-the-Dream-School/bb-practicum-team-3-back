@@ -13,7 +13,7 @@ const attachCookiesToResponse = ({ res, user }) => {
     signed: true,
     path: "/",
     sameSite: "none",
-    secure: true,
+    secure: process.env.NODE_ENV === "production",
   });
 };
 

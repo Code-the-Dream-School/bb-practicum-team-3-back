@@ -61,7 +61,7 @@ const logout = async (req, res, next) => {
       signed: true,
       path: "/",
       sameSite: "none",
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
     });
 
     res.status(StatusCodes.OK).json({ msg: "user logged out" });
