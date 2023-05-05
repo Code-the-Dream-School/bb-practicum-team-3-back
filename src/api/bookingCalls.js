@@ -123,6 +123,31 @@ const hotelReviews = async (hotelId) => {
     console.log(error);
   }
 };
+
+const reviewScores = async (hotelId) => {
+  const options = {
+    method: "GET",
+    url: "https://booking-com.p.rapidapi.com/v1/hotels/review-scores",
+    params: {
+      hotel_id: `${hotelId}`,
+      locale: "en-gb",
+    },
+    headers: {
+      "content-type": "application/octet-stream",
+      "X-RapidAPI-Key": `${process.env.RapidAPI_Key}`,
+      "X-RapidAPI-Host": "booking-com.p.rapidapi.com",
+    },
+  };
+
+  try {
+    const response = await axios.request(options);
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw new Error(`Error fetching review scores for hotelId: ${hotelId}`);
+  }
+};
+
 /// list of all of the hotel facilities with hotel facility type ID and the actual name.
 const hotel_facilities_list = async () => {
   const options = {
@@ -350,4 +375,5 @@ module.exports = {
   hotelRooms,
   hotel_facilities_list,
   countryCodes,
+  reviewScores,
 };
