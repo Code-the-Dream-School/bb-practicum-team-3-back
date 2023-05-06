@@ -294,7 +294,7 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
       const roomData = rooms[roomId];
 
       return {
-        roomType: room_name,
+        room_type: room_name,
         room_id: roomId,
         bedType: roomData.bed_configurations[0].bed_types
           .map((bed) => bed.name_with_count)
