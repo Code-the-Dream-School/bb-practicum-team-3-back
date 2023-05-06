@@ -307,14 +307,14 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
 
     const checkinDateObj = new Date(checkinDate);
     const checkoutDateObj = new Date(checkoutDate);
-    const daysOfStay = Math.floor(
+    const days_of_stay = Math.floor(
       (checkoutDateObj - checkinDateObj) / (1000 * 60 * 60 * 24)
     );
 
     return {
-      checkinDate,
-      checkoutDate,
-      daysOfStay,
+      checkin_date: checkinDate,
+      checkout_date: checkoutDate,
+      days_of_stay,
       rooms: roomsList,
     };
   } catch (error) {

@@ -107,7 +107,7 @@ const getHotelRooms = async (req, res) => {
       adultNumber
     );
 
-    res.status(StatusCodes.OK).json({ rooms: rooms });
+    res.status(StatusCodes.OK).json({ data: rooms });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
