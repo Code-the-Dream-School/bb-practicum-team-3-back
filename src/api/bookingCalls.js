@@ -284,81 +284,38 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
 
   try {
     const response = await axios.request(options);
-    const { data } = response; // extract the 'data' object from the response
+    const { data } = response;
 
-    const { block, rooms, room_recommendation } = data[0]; // extract the required fields from the first object of the 'data' array
-    //// filters the block object which is the available_rooms
-    const filteredBlock = block.map(({ min_price, room_name, block_id }) => ({
-      min_price: { currency: min_price.currency, price: min_price.price },
-      room_name,
-      room_id: block_id.split("_")[0],
-    }));
-    ////filters the room recommendation
-    const filteredRoomRecommendation = room_recommendation.map((room) => {
-      const {
-        block_id,
-        adults,
-        children,
-        number_of_extra_beds,
-        total_extra_bed_price,
-        total_extra_bed_price_in_hotel_currency,
-        babies,
-        ...rest
-      } = room;
-      return { room_id: block_id.split("_")[0] };
+    const { block, rooms } = data[0];
+
+    const roomsList = block.map((blockItem) => {
+      const { min_price, room_name, block_id } = blockItem;
+      const roomId = block_id.split("_")[0];
+      const roomData = rooms[roomId];
+
+      return {
+        roomType: room_name,
+        room_id: roomId,
+        bedType: roomData.bed_configurations[0].bed_types
+          .map((bed) => bed.name_with_count)
+          .join(", "),
+        sleeps: adultNumber,
+        price: parseFloat(min_price.price),
+        amenities: roomData.facilities.map((facility) => facility.name),
+      };
     });
 
-    const roomKeys = Object.keys(rooms);
-    const filteredRooms = {};
-    for (const key of roomKeys) {
-      const {
-        photos,
-        facilities,
-        private_bathroom_highlight,
-        children_and_beds_text,
-        highlights,
-        photos_may_sorted,
-        is_high_floor_guaranteed,
-        private_bathroom_count,
-        bed_configurations,
-        ...roomData
-      } = rooms[key];
-      ///// facilities are filtered and name is extracted
-      const filteredFacilities = facilities.map(({ name }) => name);
-      const filteredChildrenText =
-        children_and_beds_text.children_at_the_property.map(({ text }) => text);
-      const filteredCribsAndExtraBeds =
-        children_and_beds_text.cribs_and_extra_beds.map(({ text }) => text);
-      const filteredHighlights = highlights.map(({ translated_name }) => ({
-        name: translated_name,
-      }));
-      const filteredBedConfigurations = bed_configurations.map(
-        ({ bed_types }) => {
-          return {
-            bed_types: bed_types.map(({ name_with_count, description }) => ({
-              name_with_count,
-              description,
-            })),
-          };
-        }
-      );
-      ///// here we make it so we only get back the text for children policies
-      filteredRooms[key] = {
-        ...roomData,
-        facilities: filteredFacilities,
-        children_and_beds_text: {
-          children_at_the_property: filteredChildrenText,
-          cribs_and_extra_beds: filteredCribsAndExtraBeds,
-        },
-        highlights: filteredHighlights,
-        photos: photos.map(({ url_original }) => ({ url_original })),
-        bed_configurations: filteredBedConfigurations,
-      };
-    }
+    const checkinDateObj = new Date(checkinDate);
+    const checkoutDateObj = new Date(checkoutDate);
+    const daysOfStay = Math.floor(
+      (checkoutDateObj - checkinDateObj) / (1000 * 60 * 60 * 24)
+    );
+
     return {
-      available_rooms: filteredBlock,
-      rooms_info_sorted_by_id: filteredRooms,
-      room_recommendation: filteredRoomRecommendation,
+      checkinDate,
+      checkoutDate,
+      daysOfStay,
+      rooms: roomsList,
     };
   } catch (error) {
     console.error(error);
