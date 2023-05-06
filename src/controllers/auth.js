@@ -62,8 +62,8 @@ const logout = async (req, res, next) => {
       expires: new Date(Date.now()),
       signed: true,
       path: "/",
-      sameSite: "Lax",
-      secure: isProduction, // Set 'secure' dynamically based on the environment
+      sameSite: isProduction ? "None" : "Lax",
+      secure: isProduction,
     });
 
     res.status(StatusCodes.OK).json({ msg: "user logged out" });
