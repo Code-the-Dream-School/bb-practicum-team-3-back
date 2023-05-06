@@ -13,7 +13,7 @@ const attachCookiesToResponse = ({ res, user }) => {
     expires: new Date(Date.now() + oneDay),
     signed: true,
     path: "/",
-    sameSite: "none",
+    sameSite: "Lax",
     secure: isProduction, // Set 'secure' dynamically based on the environment
   });
 };
