@@ -55,13 +55,15 @@ const login = async (req, res, next) => {
 /// LOGOUT
 const logout = async (req, res, next) => {
   try {
+    const isProduction = process.env.NODE_ENV === "production";
+
     res.cookie(`${process.env.COOKIE_NAME}`, "", {
       httpOnly: true,
       expires: new Date(Date.now()),
       signed: true,
       path: "/",
-      sameSite: "none",
-      secure: true,
+      sameSite: isProduction ? "None" : "Lax",
+      secure: isProduction,
     });
 
     res.status(StatusCodes.OK).json({ msg: "user logged out" });

@@ -10,6 +10,7 @@ const {
   hotelRooms,
   hotel_facilities_list,
   countryCodes,
+  reviewScores,
 } = require("../api/bookingCalls");
 
 const getHotelsByLocation = async (req, res) => {
@@ -106,7 +107,7 @@ const getHotelRooms = async (req, res) => {
       adultNumber
     );
 
-    res.status(StatusCodes.OK).json({ rooms: rooms });
+    res.status(StatusCodes.OK).json({ data: rooms });
   } catch (error) {
     res.status(StatusCodes.NOT_FOUND).json({ error: error });
   }
@@ -132,6 +133,10 @@ const hotelMapPreviewLimited = async (hotelId) => {
 
 const countryCodesLimited = async () => {
   return limiter.schedule(() => countryCodes());
+};
+
+const reviewScoresLimited = async (hotelId) => {
+  return limiter.schedule(() => reviewScores(hotelId));
 };
 
 const hotel_facilities_listLimited = async () => {
@@ -223,6 +228,7 @@ const allHotelDetails = async (req, res) => {
       mapPreviewUrl,
       countries,
       facilitiesResponse,
+      reviewScoresResponse,
     ] = await Promise.all([
       hotelReviewsLimited(hotelId),
       hotelDataLimited(hotelId),
@@ -230,6 +236,7 @@ const allHotelDetails = async (req, res) => {
       hotelMapPreviewLimited(hotelId),
       countryCodesLimited(),
       hotel_facilities_listLimited(),
+      reviewScoresLimited(hotelId),
     ]);
 
     const countryCodeToName = countries.result.reduce((acc, country) => {
@@ -253,6 +260,27 @@ const allHotelDetails = async (req, res) => {
       review.date = review.date.split(" ")[0];
       review.average_score = Math.round(review.average_score);
     });
+
+    // Process reviewScores response
+    const processReviewScores = (scores) => {
+      if (!scores) return {};
+
+      const processedScores = {};
+
+      scores.score_breakdown.forEach(
+        ({ average_score, customer_type, question }) => {
+          question.forEach(({ score, localized_question }) => {
+            // Replace spaces with underscores and append "_score" to the key
+            const key =
+              localized_question.replace(/\s+/g, "_").toLowerCase() + "_score";
+            processedScores[key] = Math.round(score);
+          });
+        }
+      );
+
+      return processedScores;
+    };
+    const processedReviewScores = processReviewScores(reviewScoresResponse);
 
     // Process hotel data response
     const facilities = facilitiesResponse.result;
@@ -286,6 +314,7 @@ const allHotelDetails = async (req, res) => {
       hotel_data: allHotelData,
       map_preview: mapPreviewUrl,
       photos: allHotelPictures,
+      review_scores: processedReviewScores,
       reviews: reviews,
     };
     res.status(StatusCodes.OK).json(result);

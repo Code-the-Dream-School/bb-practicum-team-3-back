@@ -4,6 +4,7 @@ const isTokenValid = ({ token }) => jwt.verify(token, process.env.JWT_SECRET);
 
 const attachCookiesToResponse = ({ res, user }) => {
   const token = user.createJWT();
+  const isProduction = process.env.NODE_ENV === "production";
 
   const oneDay = 1000 * 60 * 60 * 24;
 
@@ -12,8 +13,8 @@ const attachCookiesToResponse = ({ res, user }) => {
     expires: new Date(Date.now() + oneDay),
     signed: true,
     path: "/",
-    sameSite: "none",
-    secure: true,
+    sameSite: isProduction ? "None" : "Lax",
+    secure: isProduction,
   });
 };
 
