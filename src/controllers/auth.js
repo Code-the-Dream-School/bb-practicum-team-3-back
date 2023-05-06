@@ -1,6 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const User = require("../models/User");
-const CustomError = require("../errors");
+const { BadRequestError, UnauthenticatedError } = require("../errors");
 const { attachCookiesToResponse, createTokenUser } = require("../utils");
 
 /// REGISTER
@@ -10,12 +10,14 @@ const register = async (req, res, next) => {
 
     const emailAlreadyExists = await User.findOne({ email });
     if (emailAlreadyExists) {
-      throw new CustomError.BadRequestError("Email already exists");
+      throw new BadRequestError("Email already exists");
     }
 
     const user = await User.create({ firstName, lastName, email, password });
+
     const tokenUser = createTokenUser(user);
     attachCookiesToResponse({ res, user });
+
     res.status(StatusCodes.CREATED).json({ user: tokenUser });
   } catch (error) {
     next(error);
@@ -28,21 +30,22 @@ const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      throw new CustomError.BadRequestError(
-        "Please provide email and password"
-      );
+      throw new BadRequestError("Please provide email and password");
     }
-    const user = await User.findOne({ email });
 
+    const user = await User.findOne({ email });
     if (!user) {
-      throw new CustomError.UnauthenticatedError("Invalid Credentials");
+      throw new UnauthenticatedError("Invalid Credentials");
     }
+
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
-      throw new CustomError.UnauthenticatedError("Invalid Credentials");
+      throw new UnauthenticatedError("Invalid Credentials");
     }
+
     const tokenUser = createTokenUser(user);
     attachCookiesToResponse({ res, user });
+
     res.status(StatusCodes.OK).json({ user: tokenUser });
   } catch (error) {
     next(error);
@@ -55,6 +58,10 @@ const logout = async (req, res, next) => {
     res.cookie(`${process.env.COOKIE_NAME}`, "", {
       httpOnly: true,
       expires: new Date(Date.now()),
+      signed: true,
+      path: "/",
+      sameSite: "none",
+      secure: true,
     });
 
     res.status(StatusCodes.OK).json({ msg: "user logged out" });
