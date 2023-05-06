@@ -62,7 +62,7 @@ const logout = async (req, res, next) => {
       expires: new Date(Date.now()),
       signed: true,
       path: "/",
-      sameSite: "none",
+      sameSite: "Lax",
       secure: isProduction, // Set 'secure' dynamically based on the environment
     });
 
