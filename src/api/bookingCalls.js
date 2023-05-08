@@ -260,7 +260,7 @@ const hotelMapPreview = async (hotelId) => {
   }
 };
 ///// available rooms based on req.params
-const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
+const hotelRooms = async (hotelId, checkinDate, checkoutDate, guestNumber) => {
   const axios = require("axios");
 
   const options = {
@@ -272,7 +272,7 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
       checkout_date: `${checkoutDate}`,
       locale: "en-gb",
       checkin_date: `${checkinDate}`,
-      adults_number_by_rooms: `${adultNumber}`,
+      adults_number_by_rooms: `${guestNumber}`,
       units: "metric",
     },
     headers: {
@@ -299,7 +299,7 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
         bedType: roomData.bed_configurations[0].bed_types
           .map((bed) => bed.name_with_count)
           .join(", "),
-        sleeps: adultNumber,
+        sleeps: guestNumber,
         price: parseFloat(min_price.price),
         amenities: roomData.facilities.map((facility) => facility.name),
       };

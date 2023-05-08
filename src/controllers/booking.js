@@ -38,7 +38,6 @@ const getHotelsByLocation = async (req, res) => {
     nextDate.setDate(nextDate.getDate() + 1);
     checkoutDate = nextDate.toISOString().slice(0, 10);
   }
-  console.log(checkinDate);
 
   try {
     const locationId = await searchLocation(destination);
@@ -59,44 +58,40 @@ const getHotelsByLocation = async (req, res) => {
 };
 
 ///// this creates error messages if there are missing params for get hotel rooms
-const getErrorMessages = ({
-  hotelId,
-  checkinDate,
-  checkoutDate,
-  adultNumber,
-}) => {
+const getErrorMessages = ({ hotelId, guestNumber }) => {
   const errorMessages = [];
 
   if (!hotelId) {
     errorMessages.push("Hotel Id is required");
   }
 
-  if (!checkinDate) {
-    errorMessages.push("Checkin date is required");
-  }
-
-  if (!checkoutDate) {
-    errorMessages.push("Checkout date is required");
-  }
-
-  if (!adultNumber) {
-    errorMessages.push("Number of adults is required");
+  if (!guestNumber) {
+    errorMessages.push("Number of guests is required");
   }
 
   return errorMessages.join(", ");
 };
 
 const getHotelRooms = async (req, res) => {
-  let { hotelId, checkinDate, checkoutDate, adultNumber } = req.query;
+  let { hotelId, checkinDate, checkoutDate, guestNumber } = req.query;
 
-  const errorMessages = getErrorMessages({
-    hotelId,
-    checkinDate,
-    checkoutDate,
-    adultNumber,
-  });
-  if (errorMessages) {
-    throw new Error(errorMessages);
+  if (checkinDate === "null" || !checkinDate) {
+    checkinDate = new Date().toISOString().slice(0, 10);
+  }
+
+  if (checkoutDate === "null" || !checkoutDate) {
+    const nextDate = new Date();
+    nextDate.setDate(nextDate.getDate() + 1);
+    checkoutDate = nextDate.toISOString().slice(0, 10);
+  }
+
+  const errorMessages = getErrorMessages({ hotelId, guestNumber });
+
+  if (errorMessages.length > 0) {
+    res
+      .status(StatusCodes.BAD_REQUEST)
+      .json({ error: errorMessages.join(", ") });
+    return;
   }
 
   try {
@@ -104,15 +99,16 @@ const getHotelRooms = async (req, res) => {
       hotelId,
       checkinDate,
       checkoutDate,
-      adultNumber
+      guestNumber
     );
 
     res.status(StatusCodes.OK).json({ data: rooms });
   } catch (error) {
-    res.status(StatusCodes.NOT_FOUND).json({ error: error });
+    res.status(StatusCodes.NOT_FOUND).json({ error: error.message });
   }
 };
 
+///// use the same thing as he did
 // Rate-limited wrapper functions for API requests
 // These functions use the Bottleneck rate limiter to ensure that API requests are made within the allowed limits
 const hotelReviewsLimited = async (hotelId) => {
