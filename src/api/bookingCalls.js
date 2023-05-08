@@ -181,11 +181,6 @@ const hotelData = async (hotelId) => {
   try {
     const response = await axios.request(options);
 
-    ////// if the hotel does not have description_translations then the hotel will not be available.
-    if (!response.data.hasOwnProperty("description_translations")) {
-      throw new Error("The hotel is not available.");
-    }
-
     const filteredHotelData = {};
 
     for (const key in response.data) {
@@ -206,6 +201,13 @@ const hotelData = async (hotelId) => {
       ) {
         filteredHotelData[key] = response.data[key];
       }
+    }
+
+    // Add default description if it doesn't exist
+    if (!filteredHotelData.hasOwnProperty("description_translations")) {
+      filteredHotelData["description_translations"] = [
+        { translation: "Description not available" },
+      ];
     }
 
     return filteredHotelData;

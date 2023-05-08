@@ -240,7 +240,7 @@ const allHotelDetails = async (req, res) => {
       return acc;
     }, {});
     // error handling if the hotel does not contain needed data.
-    if (!allHotelData || allHotelData === "The hotel is not available.") {
+    if (!allHotelData) {
       res
         .status(StatusCodes.NOT_FOUND)
         .json({ error: "The hotel is not available." });
