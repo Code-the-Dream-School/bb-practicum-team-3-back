@@ -301,7 +301,6 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, guestNumber) => {
         bedType: roomData.bed_configurations[0].bed_types
           .map((bed) => bed.name_with_count)
           .join(", "),
-        sleeps: guestNumber,
         price: parseFloat(min_price.price),
         amenities: roomData.facilities.map((facility) => facility.name),
       };
@@ -317,6 +316,7 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, guestNumber) => {
       checkin_date: checkinDate,
       checkout_date: checkoutDate,
       days_of_stay,
+      guestNumber, // Add guestNumber here
       rooms: roomsList,
     };
   } catch (error) {
