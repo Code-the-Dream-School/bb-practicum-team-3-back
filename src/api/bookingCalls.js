@@ -181,11 +181,6 @@ const hotelData = async (hotelId) => {
   try {
     const response = await axios.request(options);
 
-    ////// if the hotel does not have description_translations then the hotel will not be available.
-    if (!response.data.hasOwnProperty("description_translations")) {
-      throw new Error("The hotel is not available.");
-    }
-
     const filteredHotelData = {};
 
     for (const key in response.data) {
@@ -206,6 +201,13 @@ const hotelData = async (hotelId) => {
       ) {
         filteredHotelData[key] = response.data[key];
       }
+    }
+
+    // Add default description if it doesn't exist
+    if (!filteredHotelData.hasOwnProperty("description_translations")) {
+      filteredHotelData["description_translations"] = [
+        { description: "Description not available" },
+      ];
     }
 
     return filteredHotelData;
@@ -260,7 +262,7 @@ const hotelMapPreview = async (hotelId) => {
   }
 };
 ///// available rooms based on req.params
-const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
+const hotelRooms = async (hotelId, checkinDate, checkoutDate, guestNumber) => {
   const axios = require("axios");
 
   const options = {
@@ -272,7 +274,7 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
       checkout_date: `${checkoutDate}`,
       locale: "en-gb",
       checkin_date: `${checkinDate}`,
-      adults_number_by_rooms: `${adultNumber}`,
+      adults_number_by_rooms: `${guestNumber}`,
       units: "metric",
     },
     headers: {
@@ -299,7 +301,6 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
         bedType: roomData.bed_configurations[0].bed_types
           .map((bed) => bed.name_with_count)
           .join(", "),
-        sleeps: adultNumber,
         price: parseFloat(min_price.price),
         amenities: roomData.facilities.map((facility) => facility.name),
       };
@@ -315,6 +316,7 @@ const hotelRooms = async (hotelId, checkinDate, checkoutDate, adultNumber) => {
       checkin_date: checkinDate,
       checkout_date: checkoutDate,
       days_of_stay,
+      guestNumber, // Add guestNumber here
       rooms: roomsList,
     };
   } catch (error) {
