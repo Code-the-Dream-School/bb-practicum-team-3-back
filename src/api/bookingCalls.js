@@ -206,7 +206,7 @@ const hotelData = async (hotelId) => {
     // Add default description if it doesn't exist
     if (!filteredHotelData.hasOwnProperty("description_translations")) {
       filteredHotelData["description_translations"] = [
-        { translation: "Description not available" },
+        { description: "Description not available" },
       ];
     }
 
